@@ -1,10 +1,12 @@
 const express = require('express');
 const app = express();
 
+const db = require('./db/service');
+
 app.set('port', process.env.PORT || 3000);
 
 app.get('/', (req, res) => {
-    res.send('Hello, Express');
+    db.getAllData((result) => { res.send(result) });
 })
 
 app.listen(app.get('port'), () => {
