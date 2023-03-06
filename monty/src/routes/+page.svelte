@@ -3,26 +3,33 @@
     import Door from '../components/Door.svelte';
 
     // 통계 관련
-    let changeWin = 1, changeLose = 1, unChangeWin = 1, unChangeLose = 1;
-
-    axios.get('http://localhost:3000').then(res => {
-        const data = res.data;
-        changeWin = data[0].val;
-        changeLose = data[1].val;
-        unChangeWin = data[2].val;
-        unChangeLose = data[3].val;
-        console.log(data);
-    });
-
-    let changeRate = 0;
-    let unChangeRate = 0;
-
-    $: changeRate = (changeWin / (changeWin + changeLose)) * 100;
-    $: unChangeRate = (unChangeWin / (unChangeWin + unChangeLose)) * 100;
+    let changeWin, changeLose, changeRate;
+    let unChangeWin, unChangeLose, unChangeRate;
+    let totalWin, totalLose, totalRate;
 
     // 게임 관련
     let gameText, gameState;
     let selectedDoor, answerDoor, openDoor, doorStates;
+
+    const getStatsInfo = () => {
+            axios.get('http://192.168.6.31:3000').then(res => {
+            const data = res.data;
+            changeWin = data[0].val;
+            changeLose = data[1].val;
+            unChangeWin = data[2].val;
+            unChangeLose = data[3].val;
+
+            totalWin = changeWin + unChangeWin;
+            totalLose = changeLose + unChangeLose;
+            totalRate = (totalWin / (totalWin + totalLose)) * 100;
+            changeRate = (changeWin / (changeWin + changeLose)) * 100;
+            unChangeRate = (unChangeWin / (unChangeWin + unChangeLose)) * 100;
+
+            totalRate = totalRate ? totalRate.toFixed(3) : 0;
+            changeRate = changeRate ? changeRate.toFixed(3) : 0;
+            unChangeRate = unChangeRate ? unChangeRate.toFixed(3) : 0;
+        });
+    }
 
     const getOpenDoor = () => {
 
@@ -67,31 +74,62 @@
                 gameText = `축하드립니다~ 성공하셨습니다! 다시하시려면 게임 시작 버튼을 눌러주세요`;
                 gameState = 3;
                 if (idx === selectedDoor) {
-                    axios.get('http://localhost:3000/3').then(res => res);
+                    axios.get('http://localhost:3000/3').then(_ => getStatsInfo());
                 } else {
-                    axios.get('http://localhost:3000/1').then(res => res);
+                    axios.get('http://localhost:3000/1').then(_ => getStatsInfo());
                 }
             } else {
                 doorStates[idx] = 2;
                 gameText = `저런! 실패하셨습니다! 다시하시려면 게임 시작 버튼을 눌러주세요`;
                 gameState = 3;
                 if (idx === selectedDoor) {
-                    axios.get('http://localhost:3000/4').then(res => res);
+                    axios.get('http://localhost:3000/4').then(_ => getStatsInfo());
                 } else {
-                    axios.get('http://localhost:3000/2').then(res => res);
+                    axios.get('http://localhost:3000/2').then(_ => getStatsInfo());
                 }
             }
         }
     }
 
+    getStatsInfo();
     initGame();
 </script>
 
 <div class="main-container">
     <headder>모온티호올</headder>
     <section class="stat-container">
-        <div class="rate-text">바꾸면? {changeRate}%</div>
-        <div class="rate-text">안바꾸면? {unChangeRate}%</div>
+        <table>
+            <thead>
+                <td>구분</td>
+                <td>계</td>
+                <td>성공</td>
+                <td>실패</td>
+                <td>통계</td>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>계</td>
+                    <td>{totalWin + totalLose}</td>
+                    <td>{totalWin}</td>
+                    <td>{totalLose}</td>
+                    <td>{totalRate}%</td>
+                </tr>
+                <tr>
+                    <td>변경</td>
+                    <td>{changeWin + changeLose}</td>
+                    <td>{changeWin}</td>
+                    <td>{changeLose}</td>
+                    <td class="rate-text">{changeRate}%</td>
+                </tr>
+                <tr>
+                    <td>그대로</td>
+                    <td>{unChangeWin + unChangeLose}</td>
+                    <td>{unChangeWin}</td>
+                    <td>{unChangeLose}</td>
+                    <td class="rate-text">{unChangeRate}%</td>
+                </tr>
+            </tbody>
+        </table>
     </section>
     <section class="door-container">
         {#each Array(3) as _, idx}
@@ -109,8 +147,10 @@
     section { display: flex; }
 
     headder { text-align: center; padding: 10px; font-size: 20px; font-weight: bold; }
-    .stat-container { flex-direction: column; }
-    .stat-container .rate-text { text-align: center; padding: 5px;}
+    .stat-container { flex-direction: column; align-items: center; }
+    .stat-container table { border-spacing: 0; margin: 10px; border-collapse: collapse; }
+    .stat-container td { width: 70px; margin: 0; padding: 3px; border: 1px solid #000; text-align: center; font-size: 8pt; }
+    .stat-container .rate-text { font-weight: bold; }
 
     .door-container { justify-content: center; margin: 10px; background-color: #ead; }
     .door-container button { border: none; background-color:unset; }
