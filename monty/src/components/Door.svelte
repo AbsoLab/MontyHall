@@ -21,5 +21,6 @@
 <img src="{path}" alt="" on:mouseenter="{handleMouseEnter}" on:mouseleave="{handleMouseLeave}">
 
 <style>
+    img { margin: 10px; }
     img:hover { cursor: pointer; }
 </style>
